@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Турецкий по сценам</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}button,select{font:inherit}
+/* Layout: one narrow column app. Home = today's plan (morning test, due reviews, new scene) + scene tiles + stats; Session = one task card filling the column. Iznik tile palette: cobalt ink on porcelain, turquoise for success, coral for errors. */
+:root{
+  --bg:#eef3f7; --surface:#ffffff; --ink:#13213b; --muted:#5a6a80; --line:#d3dde8;
+  --cobalt:#1f4fa3; --cobalt-ink:#ffffff; --turq:#14837f; --turq-soft:#d7f0ee; --coral:#c2412c; --coral-soft:#f9e0da; --tile:#e3ebf5;
+  --display:'Spectral',Georgia,'Times New Roman',serif;
+  --body:'Golos Text','Segoe UI',Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1322; --surface:#132037; --ink:#e7eef8; --muted:#95a5bc; --line:#24344f;
+  --cobalt:#7ea6ff; --cobalt-ink:#0b1322; --turq:#4fcfc4; --turq-soft:#123a3c; --coral:#ff8b74; --coral-soft:#3d1d1a; --tile:#1b2b47; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1322; --surface:#132037; --ink:#e7eef8; --muted:#95a5bc; --line:#24344f;
+  --cobalt:#7ea6ff; --cobalt-ink:#0b1322; --turq:#4fcfc4; --turq-soft:#123a3c; --coral:#ff8b74; --coral-soft:#3d1d1a; --tile:#1b2b47; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 28px;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:30rem;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:700;font-size:2rem;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:0}
+p{margin:0}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.plan{display:flex;flex-direction:column;gap:10px}
+.act{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:14px 16px;font:inherit;cursor:pointer}
+.act:disabled{cursor:default;opacity:.55}
+.act .n{font-family:var(--display);font-weight:700;font-size:1.9rem;min-width:2.2ch;text-align:center;font-variant-numeric:tabular-nums;color:var(--cobalt)}
+.act .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.act .t b{font-weight:600}
+.act.hero{background:var(--cobalt);color:var(--cobalt-ink);border-color:var(--cobalt)}
+.act.hero .n{color:var(--cobalt-ink)}
+.act.hero .muted{color:inherit;opacity:.8}
+.act:focus-visible,.btn:focus-visible,.opt:focus-visible,.syl:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
+.scenes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.scene{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.scene.on{border-color:var(--cobalt);box-shadow:inset 0 0 0 1px var(--cobalt)}
+.scene .em{font-size:1.5rem}
+.addform{display:flex;flex-direction:column;gap:8px}
+.addform input,.addform select,select{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-height:44px;width:100%}
+.addform .row select{width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 12px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.chip b{font-family:var(--display);font-size:1.05rem}
+.chip span{font-size:.78rem;color:var(--muted)}
+.chip.on{background:var(--turq-soft);border-color:var(--turq)}
+.scene .tr{font-family:var(--display);font-weight:600}
+.bar{height:5px;border-radius:3px;background:var(--tile);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--turq)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{border-top:2px solid var(--line);padding-top:8px}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.btn{appearance:none;font:inherit;font-weight:500;border:1px solid var(--cobalt);background:var(--cobalt);color:var(--cobalt-ink);border-radius:999px;padding:11px 18px;min-height:46px;cursor:pointer;touch-action:manipulation}
+.btn.ghost{background:transparent;color:var(--cobalt)}
+.btn.quiet{background:transparent;color:var(--muted);border-color:var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{border-left:3px solid var(--turq);padding:6px 0 6px 12px;color:var(--muted);font-size:.9rem}
+details summary{cursor:pointer;color:var(--muted)}
+textarea{width:100%;min-height:100px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;box-sizing:border-box}
+/* session */
+#sess{min-height:calc(100% - 8px)}
+.top{display:flex;align-items:center;gap:12px}
+.top .prog{flex:1;height:6px;border-radius:3px;background:var(--tile);overflow:hidden}
+.top .prog i{display:block;height:100%;background:var(--cobalt);transition:width .25s}
+.close{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:1.4rem;cursor:pointer;padding:4px 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.kind{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pic{font-size:4.2rem;line-height:1.1}
+.word{font-family:var(--display);font-weight:700;font-size:clamp(2rem,10vw,2.8rem);line-height:1.05;word-break:break-word}
+.ru{font-size:1.15rem}
+.pos{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.phrase{font-family:var(--display);font-size:1.1rem}
+.phrase small{display:block;font-family:var(--body);font-size:.88rem;color:var(--muted)}
+.say{appearance:none;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer;min-height:42px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opt{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:14px 8px;font:inherit;cursor:pointer;min-height:64px;touch-action:manipulation;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.opt .e{font-size:2.2rem;line-height:1}
+.opt .l{font-size:.85rem;color:var(--muted)}
+.opt.w{font-family:var(--display);font-weight:600;font-size:1.25rem}
+.opt.ok{background:var(--turq-soft);border-color:var(--turq)}
+.opt.bad{background:var(--coral-soft);border-color:var(--coral)}
+.build{min-height:3.2rem;font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:.01em;border-bottom:2px dashed var(--line);width:100%;padding-bottom:4px}
+.build .ph{color:var(--line)}
+.syls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.syl{appearance:none;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:10px;padding:10px 14px;font:600 1.2rem var(--display);cursor:pointer;min-width:3rem;touch-action:manipulation}
+.syl.used{visibility:hidden}
+.syl.shake{animation:sh .25s;background:var(--coral-soft);border-color:var(--coral)}
+@keyframes sh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.syl.shake{animation:none}.top .prog i{transition:none}}
+.fb{font-weight:600}
+.fb.ok{color:var(--turq)}.fb.bad{color:var(--coral)}
+.foot{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="home">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <p class="eyebrow" id="today">Сегодня</p>
+    <h1>Турецкий по сценам</h1>
+    <p class="muted small" id="voiceLine">Проверяю турецкий голос…</p>
+  </div>
+  <div class="plan" id="plan"></div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <h2>Сцены</h2>
+    <p class="muted small">Слова одной сцены связаны действием: что ты видишь, что делаешь, какое оно. Выбери, с какой сцены брать новые слова.</p>
+    <div class="scenes" id="scenes"></div>
+    <div class="row"><button class="btn ghost" id="sweepBtn" type="button">Отметить, что уже знаю</button></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <h2>Свои слова</h2>
+    <p class="muted small">Услышал новое слово — добавь сразу. Оно попадёт в сцену «Мои слова» и пойдёт по тому же расписанию, с голосом и слогами.</p>
+    <div class="addform">
+      <input id="aTr" lang="tr" placeholder="по-турецки, напр. kiracı" autocomplete="off" autocapitalize="none">
+      <input id="aRu" placeholder="перевод, напр. жилец" autocomplete="off">
+      <div class="row" style="gap:8px"><select id="aPos"><option value="n">существительное</option><option value="v">глагол</option><option value="a">прилагательное</option><option value="x">фраза / другое</option></select>
+        <input id="aEm" placeholder="эмодзи (необязательно)" style="flex:1;min-width:8rem" autocomplete="off"></div>
+      <input id="aEx" lang="tr" placeholder="фраза по-турецки (необязательно)" autocomplete="off" autocapitalize="none">
+      <input id="aExRu" placeholder="перевод фразы (необязательно)" autocomplete="off">
+      <div class="row"><button class="btn" id="addBtn" type="button">Добавить слово</button><span class="small muted" id="addMsg"></span></div>
+    </div>
+    <details><summary>Вставить набор от Claude</summary>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <p class="small muted">Попроси в чате новый набор слов, скопируй присланный блок целиком и вставь сюда.</p>
+        <textarea id="packBox" placeholder="# Название | Перевод названия | 🏦&#10;слово | эмодзи | перевод | n/v/a | фраза | перевод фразы"></textarea>
+        <div class="row"><button class="btn" id="packBtn" type="button">Добавить набор</button><span class="small muted" id="packMsg"></span></div>
+      </div>
+    </details>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <h2>Как идёт</h2>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="note" id="howto">Распорядок: утром — тест без подсказок. Днём — новые слова, повтор через 10 минут и через час. Вечером — повтор перед сном. Каждый подход — 5–7 минут.</div>
+  <details>
+    <summary>Данные и сохранение</summary>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+      <p class="small muted" id="saveLine">Сохранение: в браузере этого телефона.</p>
+      <div class="row"><button class="btn quiet" id="backupBtn" type="button">Сохранить копию в файл</button><label class="btn quiet" for="restore" style="display:inline-flex;align-items:center">Загрузить копию</label><input id="restore" type="file" accept=".json,application/json" hidden><button class="btn quiet" id="copyBtn" type="button">Скопировать данные</button><button class="btn quiet" id="pasteBtn" type="button">Вставить данные</button></div><div class="row">
+        <label class="small muted row" style="gap:6px"><span>Новых слов в день</span>
+          <select id="dailyNew"><option>6</option><option selected>12</option><option>18</option><option>24</option></select></label></div>
+      <textarea id="dataBox" readonly hidden></textarea>
+    </div>
+  </details>
+</div>
+
+<div class="wrap" id="sess" hidden>
+  <div class="top"><button class="close" id="quit" type="button" aria-label="Закончить подход">×</button><div class="prog"><i id="progBar" style="width:0%"></i></div><span class="small muted" id="progTxt"></span></div>
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=Math.random,shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;},pick=a=>a[Math.floor(rnd()*a.length)];
+function plural(n,f1,f2,f5){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return f1;if(m10>=2&&m10<=4&&(m100<12||m100>14))return f2;return f5;}
+const med=a=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+const now=()=>Date.now();
+const tstamp=e=>(e&&e.timeStamp&&Math.abs(e.timeStamp-performance.now())<1000)?e.timeStamp:performance.now();
+
+/* ---------- vocabulary: 8 everyday scenes for an A1 → A2 learner living on the coast ---------- */
+const SCENES=[
+ {id:'pazar',tr:'Pazar',ru:'Рынок',em:'🧺',w:[
+  ['domates','🍅','помидор','n','İki kilo domates.','Два кило помидоров.'],
+  ['salatalık','🥒','огурец','n','Taze salatalık var mı?','Есть свежие огурцы?'],
+  ['kiraz','🍒','черешня','n','Bir kilo kiraz lütfen.','Кило черешни, пожалуйста.'],
+  ['karpuz','🍉','арбуз','n','Büyük bir karpuz aldım.','Я купил большой арбуз.'],
+  ['fiyat','🏷️','цена','n','Fiyatı ne kadar?','Сколько стоит?'],
+  ['poşet','🛍️','пакет','n','Poşet ister misiniz?','Вам нужен пакет?'],
+  ['almak','🤲','покупать, брать','v','Domates almak istiyorum.','Я хочу купить помидоры.'],
+  ['satmak','💰','продавать','v','Burada balık satıyorlar.','Здесь продают рыбу.'],
+  ['seçmek','👆','выбирать','v','En iyisini seç.','Выбери самый лучший.'],
+  ['tartmak','⚖️','взвешивать','v','Bunu tartar mısınız?','Взвесите это?'],
+  ['pazarlık etmek','🤝','торговаться','v','Pazarda pazarlık ederiz.','На рынке мы торгуемся.'],
+  ['taze','🌿','свежий','a','taze ekmek','свежий хлеб'],
+  ['olgun','🍑','спелый','a','olgun şeftali','спелый персик'],
+  ['ucuz','⬇️','дешёвый','a','Burası çok ucuz.','Здесь очень дёшево.'],
+  ['pahalı','💎','дорогой','a','Bu biraz pahalı.','Это немного дорого.']]},
+ {id:'mutfak',tr:'Mutfak ve fırın',ru:'Кухня и пекарня',em:'🥖',w:[
+  ['un','🌾','мука','n','bir paket un','пачка муки'],
+  ['hamur','🫓','тесто','n','Hamur hazır.','Тесто готово.'],
+  ['fırın','🔥','печь; пекарня','n','Fırın çok sıcak.','Печь очень горячая.'],
+  ['tepsi','🍽️','противень, поднос','n','Tepsiyi fırına koy.','Поставь противень в печь.'],
+  ['bıçak','🔪','нож','n','keskin bir bıçak','острый нож'],
+  ['tencere','🍲','кастрюля','n','Tencere ocakta.','Кастрюля на плите.'],
+  ['pişirmek','🍳','готовить, печь','v','Ekmek pişiriyorum.','Я пеку хлеб.'],
+  ['kesmek','✂️','резать','v','Soğanı kes.','Нарежь лук.'],
+  ['karıştırmak','🥄','мешать','v','Çorbayı karıştır.','Помешай суп.'],
+  ['yoğurmak','👐','месить','v','Hamuru yoğur.','Замеси тесто.'],
+  ['soymak','🥔','чистить (кожуру)','v','Patatesleri soy.','Почисти картошку.'],
+  ['yumuşak','🧸','мягкий','a','yumuşak ekmek','мягкий хлеб'],
+  ['sert','🪨','твёрдый','a','Ekmek sert olmuş.','Хлеб стал твёрдым.'],
+  ['tuzlu','🧂','солёный','a','Çorba çok tuzlu.','Суп очень солёный.'],
+  ['tatlı','🍯','сладкий','a','tatlı bir kek','сладкий кекс']]},
+ {id:'eczane',tr:'Eczane ve doktor',ru:'Аптека и врач',em:'💊',w:[
+  ['ilaç','💊','лекарство','n','Bu ilacı günde iki kez iç.','Принимай это лекарство два раза в день.'],
+  ['reçete','📝','рецепт','n','Reçeteniz var mı?','У вас есть рецепт?'],
+  ['ağrı','🤕','боль','n','baş ağrısı','головная боль'],
+  ['ateş','🌡️','температура, жар','n','Ateşim var.','У меня температура.'],
+  ['öksürük','😮‍💨','кашель','n','kuru öksürük','сухой кашель'],
+  ['randevu','📅','запись (на приём)','n','Yarın için randevu almak istiyorum.','Я хочу записаться на завтра.'],
+  ['muayene etmek','🩺','осматривать','v','Doktor hastayı muayene etti.','Врач осмотрел больного.'],
+  ['ağrımak','😣','болеть (о части тела)','v','Başım ağrıyor.','У меня болит голова.'],
+  ['dinlenmek','🛌','отдыхать','v','Biraz dinlenmen lazım.','Тебе нужно немного отдохнуть.'],
+  ['iyileşmek','💪','выздоравливать','v','Çabuk iyileş!','Скорее поправляйся!'],
+  ['ölçmek','📏','измерять','v','Ateşini ölç.','Измерь температуру.'],
+  ['hasta','🤒','больной','a','Bugün hastayım.','Сегодня я болею.'],
+  ['ağır','🏋️','тяжёлый','a','ağır bir hastalık','тяжёлая болезнь'],
+  ['hafif','🪶','лёгкий','a','hafif bir soğuk algınlığı','лёгкая простуда'],
+  ['acil','🚑','срочный, экстренный','a','acil servis','неотложка, приёмный покой']]},
+ {id:'ev',tr:'Ev ve komşu',ru:'Дом и сосед',em:'🏠',w:[
+  ['komşu','👋','сосед','n','Komşumuz çok kibar.','Наш сосед очень вежливый.'],
+  ['anahtar','🔑','ключ','n','Anahtarı unuttum.','Я забыл ключ.'],
+  ['pencere','🪟','окно','n','Pencereyi aç.','Открой окно.'],
+  ['kira','💸','арендная плата','n','Kira ne kadar?','Сколько стоит аренда?'],
+  ['fatura','🧾','счёт (за свет, воду)','n','elektrik faturası','счёт за электричество'],
+  ['ev sahibi','🗝️','хозяин квартиры','n','Ev sahibi yarın geliyor.','Хозяин квартиры придёт завтра.'],
+  ['kiralamak','🏘️','снимать, арендовать','v','Deniz kenarında bir daire kiraladık.','Мы сняли квартиру у моря.'],
+  ['temizlemek','🧽','убирать, чистить','v','Evi temizliyorum.','Я убираю дом.'],
+  ['taşınmak','📦','переезжать','v','Yeni eve taşındık.','Мы переехали в новый дом.'],
+  ['tamir etmek','🔧','чинить','v','Musluğu tamir etmek lazım.','Нужно починить кран.'],
+  ['kapatmak','🔒','закрывать','v','Kapıyı kapat.','Закрой дверь.'],
+  ['boş','🫙','пустой','a','Daire boş.','Квартира пустая.'],
+  ['geniş','↔️','просторный, широкий','a','geniş bir balkon','просторный балкон'],
+  ['dar','↕️','узкий, тесный','a','dar bir sokak','узкая улица'],
+  ['gürültülü','🔊','шумный','a','Sokak çok gürültülü.','Улица очень шумная.']]},
+ {id:'ulasim',tr:'Ulaşım',ru:'Транспорт',em:'🚌',w:[
+  ['durak','🚏','остановка','n','Durak nerede?','Где остановка?'],
+  ['bilet','🎫','билет','n','İki bilet lütfen.','Два билета, пожалуйста.'],
+  ['şoför','🚖','водитель','n','Şoföre sor.','Спроси водителя.'],
+  ['köşe','📐','угол','n','köşedeki market','магазин на углу'],
+  ['ışık','🚦','светофор; свет','n','Işıklardan sağa dön.','На светофоре поверни направо.'],
+  ['yolcu','🧳','пассажир','n','Otobüste çok yolcu var.','В автобусе много пассажиров.'],
+  ['binmek','🧍🚌','садиться (в транспорт)','v','Otobüse bindim.','Я сел в автобус.'],
+  ['inmek','🚌🚶','выходить (из транспорта)','v','Bir sonraki durakta ineceğim.','Я выйду на следующей остановке.'],
+  ['beklemek','⏳','ждать','v','Seni bekliyorum.','Я жду тебя.'],
+  ['dönmek','↩️','поворачивать','v','Sola dön.','Поверни налево.'],
+  ['kaçırmak','🏃','пропустить, опоздать на','v','Otobüsü kaçırdım.','Я опоздал на автобус.'],
+  ['yakın','📍','близкий','a','Çok yakın.','Совсем близко.'],
+  ['uzak','🗺️','далёкий','a','Havalimanı uzak mı?','Аэропорт далеко?'],
+  ['kalabalık','👥','людный','a','Otobüs çok kalabalık.','Автобус переполнен.'],
+  ['geç','🕘','поздний, поздно','a','Geç kaldım.','Я опоздал.']]},
+ {id:'deniz',tr:'Deniz ve hava',ru:'Море и погода',em:'🌊',w:[
+  ['kum','🏖️','песок','n','Kum çok sıcak.','Песок очень горячий.'],
+  ['dalga','🏄','волна','n','Bugün dalgalar büyük.','Сегодня большие волны.'],
+  ['rüzgâr','💨','ветер','n','Rüzgâr çok sert.','Ветер очень сильный.'],
+  ['yağmur','🌧️','дождь','n','Yarın yağmur yağacak.','Завтра будет дождь.'],
+  ['bulut','☁️','облако','n','Gökyüzünde hiç bulut yok.','На небе ни облака.'],
+  ['gökyüzü','🌌','небо','n','Gökyüzü masmavi.','Небо ярко-синее.'],
+  ['yüzmek','🏊','плавать','v','Her sabah denizde yüzüyorum.','Каждое утро я плаваю в море.'],
+  ['esmek','🌬️','дуть','v','Rüzgâr esiyor.','Дует ветер.'],
+  ['yağmak','🌦️','идти (о дожде, снеге)','v','Kar yağıyor.','Идёт снег.'],
+  ['ıslanmak','💦','промокнуть','v','Yağmurda ıslandım.','Я промок под дождём.'],
+  ['güneşlenmek','😎','загорать','v','Plajda güneşleniyoruz.','Мы загораем на пляже.'],
+  ['nemli','💧','влажный','a','Hava çok nemli.','Воздух очень влажный.'],
+  ['sakin','🧘','спокойный','a','Deniz bugün sakin.','Море сегодня спокойное.'],
+  ['serin','🍃','прохладный','a','serin bir akşam','прохладный вечер'],
+  ['bulutlu','🌥️','облачный','a','Hava bulutlu.','Облачно.']]},
+ {id:'kafe',tr:'Kafede',ru:'В кафе',em:'🍵',w:[
+  ['hesap','🧾','счёт (в кафе)','n','Hesap lütfen.','Счёт, пожалуйста.'],
+  ['bahşiş','🪙','чаевые','n','Bahşiş bıraktım.','Я оставил чаевые.'],
+  ['garson','🤵','официант','n','Garson, bakar mısınız?','Официант, можно вас?'],
+  ['sipariş','📋','заказ','n','Siparişiniz hazır.','Ваш заказ готов.'],
+  ['tabak','🍽️','тарелка','n','temiz bir tabak','чистая тарелка'],
+  ['bardak','🥛','стакан','n','bir bardak su','стакан воды'],
+  ['sipariş vermek','🗣️','заказывать','v','Sipariş vermek istiyoruz.','Мы хотим сделать заказ.'],
+  ['ödemek','💳','платить','v','Kartla ödeyebilir miyim?','Могу я заплатить картой?'],
+  ['getirmek','🛎️','приносить','v','Bir çay getirir misiniz?','Принесёте чай?'],
+  ['beğenmek','👍','нравиться, одобрять','v','Yemeği çok beğendim.','Мне очень понравилась еда.'],
+  ['tatmak','👅','пробовать (на вкус)','v','Bunu tatmak ister misin?','Хочешь попробовать?'],
+  ['lezzetli','😋','вкусный','a','Çok lezzetli!','Очень вкусно!'],
+  ['acı','🌶️','острый; горький','a','Bu yemek acı mı?','Это блюдо острое?'],
+  ['dolu','🪑','полный; занятый','a','Bu masa dolu.','Этот стол занят.'],
+  ['ılık','♨️','тёплый (чуть тёплый)','a','ılık su','тёплая вода']]},
+ {id:'insan',tr:'İnsanlar ve duygular',ru:'Люди и чувства',em:'🙂',w:[
+  ['akraba','👪','родственник','n','Akrabalarım Rusya\'da.','Мои родственники в России.'],
+  ['misafir','🛋️','гость','n','Akşam misafir geliyor.','Вечером придут гости.'],
+  ['düğün','💍','свадьба','n','Düğün cumartesi.','Свадьба в субботу.'],
+  ['hediye','🎁','подарок','n','Sana bir hediye aldım.','Я купил тебе подарок.'],
+  ['söz','🤞','обещание; слово','n','Söz veriyorum.','Обещаю.'],
+  ['gülmek','😂','смеяться','v','Çok güldük.','Мы очень смеялись.'],
+  ['ağlamak','😢','плакать','v','Bebek ağlıyor.','Малыш плачет.'],
+  ['korkmak','😨','бояться','v','Köpeklerden korkuyorum.','Я боюсь собак.'],
+  ['kızmak','😠','сердиться','v','Bana kızma.','Не сердись на меня.'],
+  ['özlemek','🫂','скучать (по кому-то)','v','Seni özledim.','Я соскучился по тебе.'],
+  ['yorgun','😩','усталый','a','Bugün çok yorgunum.','Сегодня я очень устал.'],
+  ['mutlu','😊','счастливый','a','mutlu bir aile','счастливая семья'],
+  ['üzgün','😔','грустный','a','Neden üzgünsün?','Почему ты грустный?'],
+  ['sabırlı','🐢','терпеливый','a','Sabırlı ol.','Будь терпелив.'],
+  ['meraklı','🧐','любопытный','a','Çocuklar çok meraklı.','Дети очень любопытные.']]}
+, {id:'resmi',tr:'Resmi işler',ru:'Документы и ВНЖ',em:'🏛️',w:[
+  ['başvuru','📝','заявление, подача','n','Başvurumu internetten yaptım.','Я подал заявление через интернет.'],
+  ['belge','📄','документ','n','Gerekli belgeleri getirin.','Принесите нужные документы.'],
+  ['sıra','🔢','очередь','n','Sıra bekliyorum.','Я жду своей очереди.'],
+  ['imza','✍️','подпись','n','Buraya imzanızı atın.','Поставьте здесь подпись.'],
+  ['süre','⏱️','срок','n','İkametin süresi doldu.','Срок вида на жительство истёк.'],
+  ['harç','💵','пошлина, сбор','n','Harcı bankaya yatırdım.','Я оплатил пошлину в банке.'],
+  ['doldurmak','🖊️','заполнять','v','Formu doldurun.','Заполните форму.'],
+  ['onaylamak','✅','одобрять, подтверждать','v','Başvurunuz onaylandı.','Ваше заявление одобрено.'],
+  ['uzatmak','➕','продлевать','v','İkametimi uzatmam lazım.','Мне нужно продлить ВНЖ.'],
+  ['teslim etmek','📬','сдавать, вручать','v','Belgeleri teslim ettim.','Я сдал документы.'],
+  ['reddetmek','❌','отклонять, отказывать','v','Başvuru reddedildi.','Заявление отклонили.'],
+  ['geçerli','🟢','действительный','a','Pasaportunuz geçerli mi?','Ваш паспорт действителен?'],
+  ['eksik','❓','недостающий, неполный','a','Bir belge eksik.','Не хватает одного документа.'],
+  ['zorunlu','⚠️','обязательный','a','Sigorta zorunlu.','Страховка обязательна.'],
+  ['resmi','🏛️','официальный','a','resmi tatil','официальный выходной']]},
+ {id:'banka',tr:'Banka ve para',ru:'Банк и деньги',em:'🏦',w:[
+  ['havale','💸','денежный перевод','n','Dün havale yaptım.','Вчера я сделал перевод.'],
+  ['faiz','📈','процент (банковский)','n','Faiz oranı çok yüksek.','Процентная ставка очень высокая.'],
+  ['borç','📉','долг','n','Borcumu ödedim.','Я вернул долг.'],
+  ['maaş','💼','зарплата','n','Maaşım ayın başında yatıyor.','Зарплата приходит в начале месяца.'],
+  ['şube','🏢','отделение (банка)','n','En yakın şube nerede?','Где ближайшее отделение?'],
+  ['bozuk para','🪙','мелочь','n','Bozuk paranız var mı?','У вас есть мелочь?'],
+  ['biriktirmek','🐷','копить','v','Para biriktiriyorum.','Я коплю деньги.'],
+  ['harcamak','🛒','тратить','v','Çok para harcadık.','Мы потратили много денег.'],
+  ['çekmek','🏧','снимать (деньги); тянуть','v','ATM\'den para çektim.','Я снял деньги в банкомате.'],
+  ['yatırmak','📥','вносить (на счёт); класть','v','Hesaba para yatırdım.','Я положил деньги на счёт.'],
+  ['borç almak','🤲','занимать в долг','v','Arkadaşımdan borç aldım.','Я занял денег у друга.'],
+  ['indirimli','🏷️','со скидкой','a','indirimli fiyat','цена со скидкой'],
+  ['ücretsiz','🆓','бесплатный','a','Giriş ücretsiz.','Вход бесплатный.'],
+  ['nakit','💵','наличные; наличный','a','Nakit mi, kartla mı?','Наличными или картой?'],
+  ['masraflı','💰','затратный, дорогостоящий','a','Bu iş çok masraflı.','Это дело очень затратное.']]},
+ {id:'usta',tr:'Profesyonel mutfak',ru:'Профессиональная кухня',em:'👨‍🍳',w:[
+  ['tezgâh','🧱','рабочий стол, прилавок','n','Tezgâhı sil.','Протри рабочий стол.'],
+  ['vardiya','🕐','смена','n','Yarın gece vardiyasındayım.','Завтра я в ночную смену.'],
+  ['malzeme','🧺','продукты, ингредиенты','n','Malzemeler hazır mı?','Продукты готовы?'],
+  ['usta','🎓','мастер, шеф','n','Usta bana öğretti.','Мастер меня научил.'],
+  ['maya','🫧','дрожжи','n','Hamura maya ekle.','Добавь дрожжи в тесто.'],
+  ['dilim','🍞','ломтик, кусок','n','iki dilim ekmek','два куска хлеба'],
+  ['kızartmak','🍟','жарить','v','Patatesleri kızart.','Поджарь картошку.'],
+  ['haşlamak','🥚','варить (в воде)','v','Yumurtaları haşla.','Свари яйца.'],
+  ['doğramak','🧅','мелко резать, крошить','v','Maydanozu doğra.','Покроши петрушку.'],
+  ['kabarmak','🥐','подниматься (о тесте)','v','Hamur kabardı.','Тесто поднялось.'],
+  ['dökmek','🫗','лить, выливать','v','Sütü tencereye dök.','Вылей молоко в кастрюлю.'],
+  ['çiğ','🥩','сырой','a','Et hâlâ çiğ.','Мясо ещё сырое.'],
+  ['yanık','🔥','подгоревший','a','Ekmek yanık.','Хлеб подгорел.'],
+  ['bayat','🥖','чёрствый, несвежий','a','bayat ekmek','чёрствый хлеб'],
+  ['kıvamlı','🥣','нужной густоты','a','kıvamlı bir çorba','густой суп']]},
+ {id:'iliski',tr:'İlişkiler',ru:'Отношения и характер',em:'💬',w:[
+  ['güven','🛡️','доверие','n','Ona güvenim yok.','У меня нет к нему доверия.'],
+  ['kavga','💥','ссора, драка','n','Komşular kavga etti.','Соседи поссорились.'],
+  ['tavsiye','💡','совет, рекомендация','n','Bir tavsiye verebilir misin?','Можешь дать совет?'],
+  ['özür','🙏','извинение','n','Özür dilerim.','Прошу прощения.'],
+  ['alışkanlık','🔁','привычка','n','Kötü bir alışkanlık.','Плохая привычка.'],
+  ['güvenmek','🫱','доверять','v','Sana güveniyorum.','Я тебе доверяю.'],
+  ['şikâyet etmek','😤','жаловаться','v','Gürültüden şikâyet ettiler.','Они пожаловались на шум.'],
+  ['vazgeçmek','🚫','отказываться (от чего-то)','v','Bu fikirden vazgeçtim.','Я отказался от этой идеи.'],
+  ['alışmak','🧩','привыкать','v','Buraya alıştım.','Я привык к этому месту.'],
+  ['ikna etmek','🗣️','убеждать','v','Onu ikna ettim.','Я его убедил.'],
+  ['hatırlamak','🧠','вспоминать, помнить','v','Adını hatırlamıyorum.','Не помню, как его зовут.'],
+  ['kıskanç','😒','ревнивый, завистливый','a','kıskanç bir koca','ревнивый муж'],
+  ['utangaç','😳','застенчивый','a','Kızım biraz utangaç.','Моя дочь немного застенчивая.'],
+  ['dürüst','🧭','честный','a','Dürüst bir insan.','Честный человек.'],
+  ['kaba','😬','грубый','a','Garson çok kabaydı.','Официант был очень груб.']]}
+];
+const POS={n:'существительное',v:'глагол',a:'прилагательное'};
+const BASE_N=SCENES.length,W={},ALL=[];
+function rebuildIndex(){SCENES.length=BASE_N;for(const c of (ST&&ST.custom)||[])SCENES.push(c);for(const k in W)delete W[k];ALL.length=0;
+  SCENES.forEach(sc=>sc.w.forEach((x,i)=>{const id=sc.id+'.'+i;W[id]={id,scene:sc.id,tr:x[0],em:x[1]||'📝',ru:x[2],pos:x[3]||'n',ex:x[4]||x[0],exru:x[5]||x[2]};ALL.push(W[id]);}));}
+let ST=null;
+
+/* ---------- Turkish syllables (a consonant before a vowel starts the next syllable) ---------- */
+const V='aeıioöuüâîû';
+function syllables(phrase){const out=[];for(const word of phrase.split(' ')){const w=word,vi=[];for(let i=0;i<w.length;i++)if(V.includes(w[i].toLocaleLowerCase('tr')))vi.push(i);
+  if(vi.length<2){out.push({s:w,end:true});continue;}let start=0;
+  for(let k=0;k<vi.length-1;k++){const a=vi[k],b=vi[k+1],cut=b-a-1===0?b:b-1;out.push({s:w.slice(start,cut),end:false});start=cut;}
+  out.push({s:w.slice(start),end:true});}return out;}
+
+/* ---------- spacing schedule ---------- */
+const MIN=60e3,HOUR=3600e3,DAY=86400e3;
+function nextMorning(t){const d=new Date(t);d.setHours(5,0,0,0);if(d.getTime()<=t)d.setDate(d.getDate()+1);return d.getTime();}
+function morningIn(t,days){const d=new Date(t);d.setHours(5,0,0,0);d.setDate(d.getDate()+days);return d.getTime();}
+const STAGE_NAME=['новое','через 10 мин','через час','вечером','утром','через 3 дня','через неделю','через 16 дней','через 35 дней','через 3 месяца'];
+function advance(c,ok,t){
+  if(!ok){c.lapses=(c.lapses||0)+1;c.st=1;c.due=t+10*MIN;return;}
+  const s=c.st;
+  if(s<=0){c.st=1;c.due=t+10*MIN;}
+  else if(s===1){c.st=2;c.due=t+HOUR;}
+  else if(s===2){c.st=3;let d=t+4*HOUR;const h=new Date(d).getHours();if(h>=23||h<5)d=t+90*MIN;c.due=d;}
+  else if(s===3){c.st=4;c.due=nextMorning(t);}
+  else{const gaps=[0,0,0,0,3,7,16,35,90];c.st=Math.min(9,s+1);c.due=morningIn(t,gaps[Math.min(8,s)]||90);}
+}
+
+/* ---------- state: this device first, then the artifact store when it is available ---------- */
+const LS='turkce_state_v1',LL='turkce_logs_v1';
+try{ST=JSON.parse(localStorage.getItem(LS)||'null');}catch(e){}
+if(!ST)ST={v:1,created:now(),updated:0,cards:{},scene:'pazar',dailyNew:12,newLog:{}};
+if(!ST.custom)ST.custom=[];rebuildIndex();
+let LOGS={};const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const STANDALONE=!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));let HAS_SR=!!SR;try{LOGS=JSON.parse(localStorage.getItem(LL)||'{}')||{};}catch(e){}
+let DB=null,saveT=null,logT=null,dirtyDays=new Set();
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function save(){ST.updated=now();try{localStorage.setItem(LS,JSON.stringify(ST));}catch(e){}
+  clearTimeout(saveT);saveT=setTimeout(()=>{if(DB)DB.doc('progress/state').set(ST).then(()=>setSave('cloud')).catch(()=>setSave('local'));},700);}
+function logEv(ev){const k=dayKey(ev.t);(LOGS[k]=LOGS[k]||[]).push(ev);try{localStorage.setItem(LL,JSON.stringify(LOGS));}catch(e){}
+  dirtyDays.add(k);clearTimeout(logT);logT=setTimeout(()=>{if(!DB)return;for(const d of dirtyDays)DB.doc('logs/'+d).set({day:d,events:LOGS[d]}).catch(()=>{});dirtyDays.clear();},1200);}
+function setSave(m){$('#saveLine').textContent='Сохранение: в браузере этого телефона. Раз в несколько дней сохраняй копию в файл — её можно загрузить обратно.';}
+setSave('local');
+
+/* ---------- voice ---------- */
+let VOICE=null;
+function findVoice(){try{const vs=speechSynthesis.getVoices();VOICE=vs.find(v=>/^tr(-|_|$)/i.test(v.lang))||null;}catch(e){VOICE=null;}
+  const micNote=SR&&STANDALONE?' Внимание: открыто значком с экрана «Домой» — в этом режиме iPhone обычно не распознаёт речь, открой в Safari.':SR?' Микрофон: распознавание доступно.':' Голосовые задания в этом браузере недоступны — на iPhone открой страницу в Safari.';
+  $('#voiceLine').textContent=(VOICE?`Произношение: ${VOICE.name}.`:'На этом устройстве не нашёлся турецкий голос — слова будут без звука. Его можно добавить в настройках телефона: «Синтез речи» → язык «Türkçe».')+micNote;}
+try{speechSynthesis.onvoiceschanged=findVoice;}catch(e){}
+setTimeout(findVoice,300);setTimeout(findVoice,1500);
+// Speak one or several pieces in a row. cancel() and speak() in the same tick are dropped on iOS, so the queue starts a moment later.
+let sayT=null;
+function sayAll(parts){if(!VOICE)return;try{speechSynthesis.cancel();}catch(e){}clearTimeout(sayT);
+  sayT=setTimeout(()=>{try{for(const [text,rate] of parts){const u=new SpeechSynthesisUtterance(text);u.voice=VOICE;u.lang=VOICE.lang;u.rate=rate||.85;speechSynthesis.speak(u);}}catch(e){}},90);}
+function say(text,rate){sayAll([[text,rate]]);}
+const sayWordPhrase=w=>sayAll([[w.tr,.85],[w.ex,.8]]);
+
+/* ---------- home ---------- */
+const card=id=>ST.cards[id];
+function dueList(t){return ALL.filter(w=>{const c=card(w.id);return c&&c.st>=1&&c.due<=t;});}
+function morningList(t){const h=new Date(t).getHours();if(h<5||h>=13)return[];return dueList(t).filter(w=>card(w.id).st===4);}
+function newToday(){return ST.newLog[dayKey(now())]||0;}
+function nextBatch(){let sc=SCENES.find(s=>s.id===ST.scene)||SCENES[0];let pool=sc.w.map((x,i)=>W[sc.id+'.'+i]).filter(w=>!card(w.id));
+  if(!pool.length){const other=SCENES.find(s=>s.w.some((x,i)=>!card(s.id+'.'+i)));if(!other)return{sc,items:[]};sc=other;pool=sc.w.map((x,i)=>W[sc.id+'.'+i]).filter(w=>!card(w.id));}
+  const by=p=>pool.filter(w=>w.pos===p);const items=[...by('n').slice(0,2),...by('v').slice(0,2),...by('a').slice(0,2)];
+  for(const w of pool)if(items.length<6&&!items.includes(w))items.push(w);return{sc,items:items.slice(0,6)};}
+function fmtIn(ms){const m=Math.round(ms/MIN);if(m<60)return`через ${m} мин`;const h=Math.round(m/60);if(h<24)return`через ${h} ч`;return`через ${Math.round(h/24)} дн.`;}
+function render(){
+  const t=now(),d=new Date(t);
+  $('#today').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+  const morn=morningList(t),due=dueList(t).filter(w=>!morn.includes(w)),nb=nextBatch(),left=Math.max(0,ST.dailyNew-newToday());
+  const plan=$('#plan');plan.innerHTML='';
+  const act=(n,title,sub,fn,hero,dis)=>{const b=document.createElement('button');b.type='button';b.className='act'+(hero?' hero':'');b.disabled=!!dis;b.innerHTML=`<span class="n">${n}</span><span class="t"><b>${title}</b><span class="small muted">${sub}</span></span>`;if(!dis)b.onclick=fn;plan.appendChild(b);};
+  if(morn.length)act(morn.length,'Утренний тест','Слова, выученные вчера. Без подсказок — вспомни сам.',()=>start('morning',morn),true);
+  if(due.length)act(due.length,'Повторить сейчас','Пришло время этих слов. Подход на 3–5 минут.',()=>start('review',due.slice(0,20)),!morn.length);
+  else{const soon=ALL.map(w=>card(w.id)).filter(c=>c&&c.st>=1&&c.due>t).sort((a,b)=>a.due-b.due)[0];
+    act('·','Повторять пока нечего',soon?`Следующее повторение ${fmtIn(soon.due-t)}.`:'Начни с новых слов.',null,false,true);}
+  if(nb.items.length&&left>0)act(nb.items.length,`Новые слова: ${nb.sc.ru}`,`${nb.sc.em} ${nb.sc.tr}. Сегодня можно ещё ${left}.`,()=>start('learn',nb.items),!morn.length&&!due.length);
+  else if(nb.items.length)act('✓','Новых на сегодня хватит',`Лимит ${ST.dailyNew} слов в день. Сон закрепит выученное.`,null,false,true);
+  const sc=$('#scenes');sc.innerHTML='';
+  for(const s of SCENES){const ids=s.w.map((x,i)=>s.id+'.'+i),inW=ids.filter(i=>card(i)).length,lr=ids.filter(i=>card(i)&&card(i).st>=5).length;
+    const b=document.createElement('button');b.type='button';b.className='scene'+(ST.scene===s.id?' on':'');
+    b.innerHTML=`<span class="em">${s.em}</span><span class="tr">${s.tr}</span><span class="small muted">${s.ru} · ${inW} из ${s.w.length}</span><span class="bar"><i style="width:${Math.round(lr/s.w.length*100)}%"></i></span>`;
+    b.onclick=()=>{ST.scene=s.id;save();render();};sc.appendChild(b);}
+  // stats
+  const cards=Object.values(ST.cards),known=cards.filter(c=>c.st===-1).length,inWork=cards.filter(c=>c.st>=1).length,firm=cards.filter(c=>c.st>=5).length;
+  const evs=Object.entries(LOGS).filter(([k])=>now()-new Date(k).getTime()<8*DAY).flatMap(([,v])=>v);
+  const mo=evs.filter(e=>e.mode==='morning'),mr=mo.length?Math.round(mo.filter(e=>e.ok).length/mo.length*100):null;
+  const rts=evs.filter(e=>e.ok&&e.task==='pick').map(e=>e.rt),mrt=med(rts);
+  $('#stats').innerHTML=[['Слов в работе',inWork],['Уже знал',known],['Пережили ночь',firm],['Утром вспомнил (7 дней)',mr==null?'–':mr+'%'],['Время узнавания',mrt==null?'–':(mrt/1000).toFixed(1)+' с']]
+    .map(([l,v])=>`<div class="stat"><b>${v}</b><span class="small muted">${l}</span></div>`).join('');
+  $('#dailyNew').value=String(ST.dailyNew);
+}
+function ensureMine(){let m=ST.custom.find(c=>c.id==='mine');if(!m){m={id:'mine',tr:'Kendi kelimelerim',ru:'Мои слова',em:'✍️',w:[]};ST.custom.push(m);}return m;}
+$('#addBtn').onclick=()=>{const tr=$('#aTr').value.trim(),ru=$('#aRu').value.trim();if(!tr||!ru){$('#addMsg').textContent='Нужны турецкое слово и перевод.';return;}
+  const m=ensureMine();if(m.w.some(x=>x[0].toLocaleLowerCase('tr')===tr.toLocaleLowerCase('tr'))){$('#addMsg').textContent='Это слово уже есть.';return;}
+  m.w.push([tr,$('#aEm').value.trim()||'📝',ru,$('#aPos').value,$('#aEx').value.trim()||tr,$('#aExRu').value.trim()||ru]);
+  rebuildIndex();ST.scene='mine';save();render();['aTr','aRu','aEm','aEx','aExRu'].forEach(i=>$('#'+i).value='');$('#addMsg').textContent=`Добавлено: ${tr}. В «Моих словах» теперь ${m.w.length}.`;say(tr);};
+const POSMAP={n:'n',v:'v',a:'a',x:'x','сущ':'n','глаг':'v','прил':'a','существительное':'n','глагол':'v','прилагательное':'a','фраза':'x'};
+function parsePack(txt){txt=txt.trim();if(txt.startsWith('{')){const o=JSON.parse(txt);if(!o.w||!o.w.length)throw 0;return o;}
+  const lines=txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);let head=lines[0].startsWith('#')?lines.shift().replace(/^#+\s*/,'').split('|').map(x=>x.trim()):['Набор','Набор','📦'];
+  const w=lines.map(l=>{const p=l.split('|').map(x=>x.trim());if(p.length<3)return null;return[p[0],p[1]||'📝',p[2],POSMAP[(p[3]||'n').toLowerCase()]||'n',p[4]||p[0],p[5]||p[2]];}).filter(x=>x&&x[0]&&x[2]);
+  if(!w.length)throw 0;return{tr:head[0]||'Набор',ru:head[1]||head[0]||'Набор',em:head[2]||'📦',w};}
+$('#packBtn').onclick=()=>{let p;try{p=parsePack($('#packBox').value);}catch(e){$('#packMsg').textContent='Не получилось прочитать набор. Скопируй блок из чата целиком.';return;}
+  const known=new Set(ALL.map(x=>x.tr.toLocaleLowerCase('tr')));const fresh=p.w.filter(x=>!known.has(x[0].toLocaleLowerCase('tr')));
+  if(!fresh.length){$('#packMsg').textContent='Все слова этого набора уже есть.';return;}
+  const id='c'+now().toString(36);ST.custom.push({id,tr:p.tr,ru:p.ru,em:p.em,w:fresh});rebuildIndex();ST.scene=id;save();render();$('#packBox').value='';
+  $('#packMsg').textContent=`Добавлен набор «${p.ru}»: ${fresh.length} ${plural(fresh.length,'слово','слова','слов')}`+(fresh.length<p.w.length?` (${p.w.length-fresh.length} уже были)`:'')+'.';};
+$('#sweepBtn').onclick=()=>{const sc=SCENES.find(s=>s.id===ST.scene)||SCENES[0];const words=ALL.filter(w=>w.scene===sc.id&&!ST.cards[w.id]);
+  $('#home').hidden=true;$('#sess').hidden=false;window.scrollTo(0,0);MODE='sweep';$('#progBar').style.width='0%';$('#progTxt').textContent='';
+  const c=$('#card');if(!words.length){c.innerHTML=`<p class="kind">${sc.em} ${sc.ru}</p><p>Здесь не осталось новых слов. Выбери другую сцену.</p><div class="foot"><button class="btn" id="back" type="button">На главную</button></div>`;$('#back').onclick=goHome;return;}
+  c.innerHTML=`<p class="kind">${sc.em} ${sc.ru}</p><p>Коснись слов, которые ты уже уверенно знаешь. Они не будут попадать в новые.</p><div class="chips">${words.map((w,i)=>`<button class="chip" data-i="${i}" type="button"><b lang="tr">${w.tr}</b><span>${w.ru}</span></button>`).join('')}</div><div class="foot"><button class="btn" id="sweepOk" type="button">Готово</button></div>`;
+  c.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{b.classList.toggle('on');if(b.classList.contains('on'))say(words[+b.dataset.i].tr);});
+  $('#sweepOk').onclick=()=>{let n=0;c.querySelectorAll('.chip.on').forEach(b=>{const w=words[+b.dataset.i];ST.cards[w.id]={st:-1,due:0,known:now()};n++;logEv({t:now(),id:w.id,task:'known',ok:1,rt:0,st:0,mode:'sweep'});});save();goHome();};};
+$('#dailyNew').onchange=e=>{ST.dailyNew=+e.target.value;save();render();};
+function restoreFrom(txt){try{const d=JSON.parse(txt);if(!d||!d.state||!d.state.cards)throw 0;ST=d.state;if(!ST.custom)ST.custom=[];rebuildIndex();LOGS=d.logs||{};save();try{localStorage.setItem(LL,JSON.stringify(LOGS));}catch(e){}render();$('#saveLine').textContent='Данные загружены: '+Object.keys(ST.cards).length+' слов.';}catch(e){$('#saveLine').textContent='Не получилось прочитать данные. Нужен текст или файл, сохранённый этим тренажёром.';}}
+$('#backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify({state:ST,logs:LOGS})],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='turkce-'+dayKey(now())+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);};
+$('#restore').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restoreFrom(r.result);r.readAsText(f);};
+$('#pasteBtn').onclick=()=>{const b=$('#dataBox');b.hidden=false;b.readOnly=false;b.value='';b.placeholder='Вставь сюда данные, скопированные из версии тренажёра в Claude, и нажми ещё раз «Вставить данные».';b.focus();
+  $('#pasteBtn').onclick=()=>{if(b.value.trim())restoreFrom(b.value.trim());};};
+$('#copyBtn').onclick=e=>{const txt=JSON.stringify({state:ST,logs:LOGS});const fb=()=>{const b=$('#dataBox');b.hidden=false;b.value=txt;b.select();};try{navigator.clipboard.writeText(txt).then(()=>{e.target.textContent='Скопировано';},fb);}catch(x){fb();}};
+
+/* ---------- session ---------- */
+let Q=[],qi=0,MODE='',SESS=null;
+function start(mode,items){
+  MODE=mode;SESS={mode,t0:now(),n:0,ok:0};Q=[];
+  if(mode==='learn'){
+    items.forEach(w=>Q.push({w,task:'show'}));
+    for(const task of ['listen','pick','build'].concat(HAS_SR?['speak']:[]))shuffle([...items]).forEach(w=>Q.push({w,task}));
+  }else if(mode==='morning'){shuffle([...items]).forEach(w=>Q.push({w,task:'build'}));if(HAS_SR)shuffle([...items]).forEach(w=>Q.push({w,task:'speak',extraOnly:true}));}
+  else{shuffle([...items]).forEach(w=>{const c=card(w.id);const task=c.st===1?'pick':c.st===2?'build':c.st===3?(HAS_SR?'speak':'listen'):pick(HAS_SR?['pick','build','speak']:['pick','build','build']);Q.push({w,task});});}
+  qi=0;$('#home').hidden=true;$('#sess').hidden=false;window.scrollTo(0,0);next();
+}
+function finishSession(){
+  if(MODE==='learn'){const k=dayKey(now());const ids=new Set(Q.filter(q=>q.task==='show'&&ST.cards[q.w.id]&&ST.cards[q.w.id].st===0).map(q=>q.w.id));ST.newLog[k]=(ST.newLog[k]||0)+ids.size;
+    for(const id of ids){const c=ST.cards[id];if(c&&c.st===0){c.st=1;c.due=now()+10*MIN;}}}
+  save();const c=$('#card');const pct=SESS.n?Math.round(SESS.ok/SESS.n*100):0;
+  const msg=MODE==='learn'?'Слова пошли в работу. Первое повторение — через 10 минут.':MODE==='morning'?'Утренний тест готов. Ошибки вернутся к повторению сегодня.':'Подход окончен.';
+  c.innerHTML=`<p class="kind">Готово</p><p class="word">${pct}%</p><p class="muted">${SESS.ok} из ${SESS.n} верно</p><p>${msg}</p><div class="foot"><button class="btn" id="back" type="button">На главную</button></div>`;
+  $('#back').onclick=goHome;$('#progBar').style.width='100%';
+}
+function goHome(){try{speechSynthesis.cancel();}catch(e){}$('#sess').hidden=true;$('#home').hidden=false;render();window.scrollTo(0,0);}
+$('#quit').onclick=()=>{if(MODE==='learn'&&qi>0)finishSession();else{save();goHome();}};
+function progress(){$('#progBar').style.width=Math.round(qi/Q.length*100)+'%';$('#progTxt').textContent=`${Math.min(qi+1,Q.length)}/${Q.length}`;}
+function onsetNow(cb){requestAnimationFrame(()=>requestAnimationFrame(()=>cb(performance.now())));}
+function next(){if(qi>=Q.length){finishSession();return;}progress();const q=Q[qi];({show,listen,pick:pickTask,build,speak}[q.task])(q);}
+function done(q,ok,rt,extra){
+  const c=card(q.w.id);const t=now();
+  if(q.task!=='show'){SESS.n++;if(ok)SESS.ok++;
+    logEv({t,id:q.w.id,task:q.task,ok:ok?1:0,rt:Math.round(rt),st:c?c.st:0,mode:MODE,...(extra||{})});
+    if(MODE==='learn'){if(!ok&&q.task!=='speak')Q.push({w:q.w,task:q.task==='listen'?'pick':q.task});}
+    else if(q.extraOnly){save();}
+    else{advance(c,ok,t);c.last=t;c.reps=(c.reps||0)+1;if(MODE==='morning'){(c.mornings=c.mornings||[]).push([dayKey(t),ok?1:0,Math.round(rt)]);}save();}}
+  qi++;next();
+}
+function header(q,kind){return`<p class="kind">${kind}</p>`;}
+function reveal(q){return`<span class="pos">${POS[q.w.pos]}</span><p class="pic" aria-hidden="true">${q.w.em}</p><p class="word" lang="tr">${q.w.tr}</p><p class="ru">${q.w.ru}</p><p class="phrase" lang="tr">${q.w.ex}<small>${q.w.exru}</small></p>`;}
+function after(q,ok,rt,extra,note){
+  const c=$('#card');c.insertAdjacentHTML('beforeend',`<p class="fb ${ok?'ok':'bad'}">${ok?'Верно':'Запомни'}${note?' · '+note:''}</p>${q.task==='pick'?'':`<p class="phrase" lang="tr">${q.w.ex}<small>${q.w.exru}</small></p>`}<div class="foot"><button class="say" id="sayW" type="button">🔊 Слово и фраза</button><button class="say" id="slowP" type="button">🐢 Фраза медленно</button><button class="btn" id="go" type="button">Дальше</button></div>`);
+  sayWordPhrase(q.w);$('#sayW').onclick=()=>sayWordPhrase(q.w);$('#slowP').onclick=()=>say(q.w.ex,.6);$('#go').onclick=()=>done(q,ok,rt,extra);$('#go').focus({preventScroll:true});
+}
+/* encode: picture + sound + word + scene phrase together, then an action */
+function show(q){
+  if(!ST.cards[q.w.id])ST.cards[q.w.id]={st:0,due:0,intro:now(),reps:0,lapses:0};
+  const c=$('#card');c.innerHTML=header(q,'Новое слово')+reveal(q)+`<div class="foot"><button class="say" id="s1" type="button">🔊 Слово</button><button class="say" id="s2" type="button">🔊 Фраза</button><button class="say" id="s3" type="button">🐢 Медленно</button></div><p class="small muted">Повтори вслух за голосом слово и всю фразу — хотя бы два раза. Потом жми «Запомнил».</p>${HAS_SR?'<div class="foot"><button class="say" id="shadow" type="button">🎤 Скажи фразу — проверю</button></div><p class="small" id="heard"></p>':''}<div class="foot"><button class="btn quiet" id="knew" type="button">Уже знаю</button><button class="btn" id="go" type="button">Запомнил</button></div>`;
+  let t0=performance.now();sayWordPhrase(q.w);
+  $('#s1').onclick=()=>say(q.w.tr);$('#s2').onclick=()=>say(q.w.ex,.8);$('#s3').onclick=()=>say(q.w.ex,.6);
+  if($('#shadow'))$('#shadow').onclick=async()=>{const b=$('#shadow');b.disabled=true;b.textContent='🎤 Слушаю…';const on=performance.now();const r=await hear(7000);b.disabled=false;b.textContent='🎤 Ещё раз';
+    if(r.err){$('#heard').innerHTML=micMsg(r.err);return;}const sc=phraseScore(q.w.ex,r.alts);$('#heard').innerHTML=`Услышано: «${esc(r.alts[0]||'—')}» · совпало слов ${Math.round(sc.frac*100)}%`;
+    logEv({t:now(),id:q.w.id,task:'shadow',ok:sc.frac>=.75?1:0,rt:r.t0?Math.round(r.t0-on):null,st:0,mode:MODE,heard:r.alts[0]||'',score:+sc.frac.toFixed(2)});};
+  $('#go').onclick=e=>{logEv({t:now(),id:q.w.id,task:'show',ok:1,rt:Math.round(tstamp(e)-t0),st:0,mode:MODE});done(q,true,0);};
+  $('#knew').onclick=e=>{logEv({t:now(),id:q.w.id,task:'known',ok:1,rt:Math.round(tstamp(e)-t0),st:0,mode:MODE});ST.cards[q.w.id]={st:-1,due:0,known:now()};save();
+    // swap in the next unknown word of the same scene, so the batch keeps its size
+    const inQ=new Set(Q.map(x=>x.w.id));const rep=ALL.find(w=>w.scene===q.w.scene&&!ST.cards[w.id]&&!inQ.has(w.id))||ALL.find(w=>!ST.cards[w.id]&&!inQ.has(w.id));
+    const old=q.w;if(rep){Q.forEach((x,i)=>{if(x.w===old&&i>qi)x.w=rep;});Q.splice(qi+1,0,{w:rep,task:'show'});Q=Q.filter((x,i)=>!(i>qi+1&&x.task==='show'&&x.w===rep));}
+    else Q=Q.filter((x,i)=>i<=qi||x.w!==old);
+    qi++;next();};
+}
+function distractors(w,n,samePos){let pool=ALL.filter(x=>x.id!==w.id&&x.em!==w.em&&(!samePos||x.pos===w.pos));
+  const near=shuffle(pool.filter(x=>x.scene===w.scene)),far=shuffle(pool.filter(x=>x.scene!==w.scene));return[...near.slice(0,Math.ceil(n/2)),...far].slice(0,n);}
+/* hear the word, pick the picture */
+function listen(q){
+  if(!VOICE){pickTask(q);return;}
+  const opts=shuffle([q.w,...distractors(q.w,3,false)]);
+  const c=$('#card');c.innerHTML=header(q,'Слушай и выбери')+`<button class="say" id="again" type="button">🔊 Послушать ещё</button><div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}" type="button"><span class="e" aria-hidden="true">${o.em}</span><span class="l">${o.ru}</span></button>`).join('')}</div>`;
+  let on=0,answered=false;say(q.w.tr);onsetNow(t=>on=t);$('#again').onclick=()=>say(q.w.tr);
+  c.querySelectorAll('.opt').forEach(b=>b.addEventListener('pointerdown',e=>{if(answered||!on)return;answered=true;const o=opts[+b.dataset.i],ok=o.id===q.w.id,rt=tstamp(e)-on;
+    b.classList.add(ok?'ok':'bad');if(!ok)c.querySelectorAll('.opt')[opts.indexOf(q.w)].classList.add('ok');
+    c.insertAdjacentHTML('beforeend',`<p class="word" lang="tr">${q.w.tr}</p>`);after(q,ok,rt);}));
+}
+/* see the picture and meaning, pick the Turkish word */
+function pickTask(q){
+  const opts=shuffle([q.w,...distractors(q.w,3,true)]);
+  const c=$('#card');c.innerHTML=header(q,'Как это по-турецки?')+`<p class="pic" aria-hidden="true">${q.w.em}</p><p class="ru">${q.w.ru}</p><div class="opts">${opts.map((o,i)=>`<button class="opt w" lang="tr" data-i="${i}" type="button">${o.tr}</button>`).join('')}</div><button class="btn quiet" id="idk" type="button">Не помню</button>`;
+  let on=0,answered=false;onsetNow(t=>on=t);
+  const fin=(ok,rt,b)=>{if(answered)return;answered=true;if(b)b.classList.add(ok?'ok':'bad');c.querySelectorAll('.opt')[opts.indexOf(q.w)].classList.add('ok');$('#idk').remove();c.insertAdjacentHTML('beforeend',`<p class="phrase" lang="tr">${q.w.ex}<small>${q.w.exru}</small></p>`);after(q,ok,rt);};
+  c.querySelectorAll('.opt').forEach(b=>b.addEventListener('pointerdown',e=>{if(!on)return;const o=opts[+b.dataset.i];fin(o.id===q.w.id,tstamp(e)-on,b);}));
+  $('#idk').onclick=e=>fin(false,tstamp(e)-on,null);
+}
+/* ---------- speech: the phone turns your voice into text, and the text is compared with the word ---------- */
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=t=>String(t).toLocaleLowerCase('tr').replace(/[â]/g,'a').replace(/[î]/g,'i').replace(/[û]/g,'u').replace(/[^a-zçğıöşü0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function lev(a,b){const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];}
+function wordScore(target,alts){const T=norm(target);let best={sim:0,heard:alts[0]||''};
+  for(const a of alts){const A=norm(a);const cands=[A,...A.split(' ')];if(T.includes(' '))cands.unshift(A);
+    for(const c of cands){if(!c)continue;const sim=1-lev(T,c)/Math.max(T.length,c.length);if(sim>best.sim)best={sim,heard:a};}}
+  return best;}
+function phraseScore(target,alts){const tw=norm(target).split(' ');let frac=0;
+  for(const a of alts){const aw=norm(a).split(' ');const hit=tw.filter(w=>aw.some(x=>1-lev(w,x)/Math.max(w.length,x.length)>=.75)).length/tw.length;if(hit>frac)frac=hit;}return{frac};}
+function micMsg(err){if(err==='not-allowed'||err==='service-not-allowed'){HAS_SR=false;return'Микрофон не разрешён. Разреши его для этой страницы в настройках браузера — или занимайся без голосовых заданий.';}
+  if(err==='no-speech')return'Ничего не услышал. Нажми кнопку и сразу говори, громко и чётко. На iPhone проверь: Настройки → Основные → Клавиатура → «Диктовка» включена.';if(err==='language-not-supported')return'Телефон не распознаёт турецкий. На iPhone добавь турецкую клавиатуру (Настройки → Основные → Клавиатура → Клавиатуры) — после этого диктовка понимает турецкий.';if(err==='audio-capture')return'Микрофон занят другим приложением или недоступен.';if(err==='ended-at-once')return'Телефон сразу закрыл микрофон.'+(STANDALONE?' Ты открыл тренажёр значком с экрана «Домой» — в этом режиме iPhone не даёт распознавать речь. Открой страницу в самом Safari.':' Проверь, что страница открыта в Safari, а не внутри другого приложения, и что включена «Диктовка».')+' (код: ended-at-once)';if(err==='aborted')return'Распознавание прервано. Попробуй ещё раз.';if(err==='network')return'Распознаванию нужен интернет.';return'Распознавание не сработало (код: '+esc(err)+').';}
+function hear(ms,retry){return new Promise(res=>{let rec;try{rec=new SR();}catch(e){res({err:'unsupported',alts:[]});return;}
+  // iOS Safari often delivers only interim results and sometimes never fires onend, so interim text counts and every path has a timer
+  rec.lang='tr-TR';rec.interimResults=true;rec.maxAlternatives=5;rec.continuous=false;
+  const started=performance.now();let t0=null,alts=[],err=null,done=false,silence=null,hard=null,guard=null,gotAudio=false;
+  const fin=()=>{if(done)return;done=true;clearTimeout(silence);clearTimeout(hard);clearTimeout(guard);
+    const quick=performance.now()-started<1200&&!alts.length&&!gotAudio;
+    // right after the phone has been speaking, iOS can close the microphone at once: wait a moment and try once more
+    if(quick&&!retry&&err!=='not-allowed'&&err!=='service-not-allowed'){setTimeout(()=>hear(ms,true).then(r=>res({...r,retried:true,firstErr:err||'ended'})),600);return;}
+    res({t0,alts,err:alts.length?null:(err||(quick?'ended-at-once':'no-speech'))});};
+  const stopSoon=d=>{clearTimeout(silence);silence=setTimeout(()=>{try{rec.stop();}catch(e){}guard=setTimeout(fin,900);},d);};
+  rec.onaudiostart=()=>{gotAudio=true;};rec.onspeechstart=()=>{gotAudio=true;if(t0==null)t0=performance.now();};
+  rec.onresult=e=>{gotAudio=true;if(t0==null)t0=performance.now();const a=[];let fin2=false;
+    for(let r=0;r<e.results.length;r++){const R=e.results[r];if(R.isFinal)fin2=true;for(let k=0;k<R.length;k++)if(R[k].transcript)a.push(R[k].transcript.trim());}
+    const whole=[...e.results].map(R=>R[0]&&R[0].transcript||'').join(' ').trim();if(whole)a.unshift(whole);
+    if(a.length)alts=[...new Set(a)];stopSoon(fin2?250:1100);};
+  rec.onerror=e=>{err=e.error||'error';};rec.onend=()=>{if(!alts.length&&gotAudio&&performance.now()-started<ms){guard=setTimeout(fin,400);}else fin();};
+  hard=setTimeout(()=>{try{rec.stop();}catch(e){}guard=setTimeout(fin,1200);},ms);
+  try{if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();}catch(e){}
+  try{rec.start();}catch(e){err='start:'+(e&&e.name||'');fin();}});}
+/* say the word yourself: picture and meaning, the phone listens */
+function speak(q){
+  if(!HAS_SR){pickTask(q);return;}
+  const c=$('#card');c.innerHTML=header(q,MODE==='morning'?'Утренний тест · скажи вслух':'Скажи по-турецки')+`<p class="pic" aria-hidden="true">${q.w.em}</p><p class="ru">${q.w.ru}</p><button class="btn" id="mic" type="button">🎤 Говорить</button><p class="small muted" id="heard">Нажми и скажи слово.</p><button class="btn quiet" id="idk" type="button">Не помню</button>`;
+  let on=0,tries=0,answered=false;onsetNow(t=>on=t);
+  const fin=(ok,rt,extra)=>{if(answered)return;answered=true;$('#mic').remove();$('#idk').remove();c.insertAdjacentHTML('beforeend',`<p class="word" lang="tr">${q.w.tr}</p>`);after(q,ok,rt,extra);};
+  $('#mic').onclick=async()=>{const b=$('#mic');b.disabled=true;b.textContent='🎤 Слушаю…';tries++;const r=await hear(5000);if(answered)return;b.disabled=false;b.textContent='🎤 Ещё раз';
+    if(r.err){$('#heard').innerHTML=micMsg(r.err);logEv({t:now(),id:q.w.id,task:'micerr',ok:0,rt:0,st:0,mode:MODE,err:r.err,first:r.firstErr||null,standalone:STANDALONE?1:0});if(!HAS_SR)fin(false,0,{err:r.err});return;}
+    const sc=wordScore(q.w.tr,r.alts),ok=sc.sim>=.8;$('#heard').innerHTML=`Услышано: «${esc(sc.heard)}»`;
+    if(ok||tries>=2)fin(ok,r.t0?r.t0-on:performance.now()-on,{heard:sc.heard,sim:+sc.sim.toFixed(2),tries});
+    else $('#heard').innerHTML+=' — не совсем. Попробуй ещё раз.';};
+  $('#idk').onclick=e=>fin(false,tstamp(e)-on,{tries});
+}
+/* produce the word from syllables */
+function build(q){
+  const target=syllables(q.w.tr),others=shuffle(ALL.filter(x=>x.id!==q.w.id).flatMap(x=>syllables(x.tr).map(s=>s.s))).filter((s,i,arr)=>!target.some(t=>t.s===s)&&arr.indexOf(s)===i);
+  const tiles=shuffle([...target.map(t=>t.s),...others.slice(0,Math.min(4,Math.max(2,6-target.length)))]);
+  const morning=MODE==='morning';
+  const c=$('#card');c.innerHTML=header(q,morning?'Утренний тест · собери слово':'Собери слово')+`<p class="pic" aria-hidden="true">${q.w.em}</p><p class="ru">${q.w.ru}</p><p class="build" id="bw" lang="tr"><span class="ph">…</span></p><div class="syls">${tiles.map((s,i)=>`<button class="syl" lang="tr" data-i="${i}" type="button">${s}</button>`).join('')}</div><button class="btn quiet" id="idk" type="button">Не помню</button>`;
+  let on=0,k=0,errs=0,first=null,answered=false,built='';onsetNow(t=>on=t);
+  const fin=(ok,t)=>{if(answered)return;answered=true;c.querySelectorAll('.syl').forEach(b=>b.disabled=true);$('#idk').remove();$('#bw').textContent=q.w.tr;
+    after(q,ok,first!=null?first-on:t-on,{errs,total:Math.round(t-on)},errs&&ok?'':'');};
+  c.querySelectorAll('.syl').forEach(b=>b.addEventListener('pointerdown',e=>{if(answered||!on||b.classList.contains('used'))return;const t=tstamp(e);if(first==null)first=t;
+    if(tiles[+b.dataset.i]===target[k].s){built+=target[k].s+(target[k].end&&k<target.length-1?' ':'');k++;b.classList.add('used');$('#bw').textContent=built;
+      if(k===target.length)fin(errs===0,t);}
+    else{errs++;b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');if(errs>=3)fin(false,t);}}));
+  $('#idk').onclick=e=>fin(false,tstamp(e));
+}
+
+render();
+setInterval(()=>{if(!$('#home').hidden)render();},60e3);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#home').hidden)render();});
+})();
+</script>
+</body>
+</html>
